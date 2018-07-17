@@ -1,0 +1,19 @@
+{
+  "name": "webpackvue",
+  "version": "1.0.0",
+  "description": "webpackVue",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/k9992012/webpackVue.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/k9992012/webpackVue/issues"
+  },
+  "homepage": "https://github.com/k9992012/webpackVue#readme"
+}
