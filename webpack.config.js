@@ -3,14 +3,20 @@ const path = require('path')
 const webpack = require('webpack')
 const VueLoaderPlugin = require('vue-loader/lib/plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
+const ExtractTextPlugin = require("extract-text-webpack-plugin")
+const ExtractRootCss = new ExtractTextPlugin({filename: 'styles/root.css', allChunks: false});
+const ExtractVueCss = new ExtractTextPlugin({filename: 'styles/[name]/style.css', allChunks: true});
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 module.exports = {
     entry: './src/main.js',
+    devtool: '#eval-source-map',
     output: {
         path: path.resolve(__dirname, 'dist'),
         filename: "js/[name].js"
     },
-    devServer:{
-        contentBase:"./dist"
+    mode: "development",
+    devServer: {
+        contentBase: "./dist"
     },
     module: {
         rules: [
@@ -21,15 +27,20 @@ module.exports = {
             },
             {
                 test: /\.css$/,
-                use: [
-                    'style-loader',
-                    'css-loader'
-                    // 'postcss-loader'
-                ]
-
-                //依次使用以上loader加载css文件，postcss-loader可以暂时不加，后面再深入修改webpack配置的时候再说用处
+                // use: [
+                //     'style-loader',
+                //     'css-loader'
+                //     // 'postcss-loader'
+                // ]
                 //
-                //也可以写成这样 loader："style-loader!css-loader!postcss-loader"
+                // //依次使用以上loader加载css文件，postcss-loader可以暂时不加，后面再深入修改webpack配置的时候再说用处
+                // //
+                // //也可以写成这样 loader："style-loader!css-loader!postcss-loader"
+                //这里用的ExtractRootCss
+                use: ExtractRootCss.extract({
+                    fallback: 'style-loader',
+                    use: ['css-loader']
+                })
             },
             {
                 test: /\.(png|jpe?j|gif|svg)(\?.*)?$/,
@@ -52,31 +63,55 @@ module.exports = {
             },
             {
                 test: /\.vue$/,
-                loader: 'vue-loader'
+                loader: 'vue-loader',
                 //这一个loader当然是vue项目必须的加载器啦，不加其他规则的话，
                 //简单的这样引入就可以了，vue-loader会把vue单文件直接转成js。
+                options: {
+                    loaders: {
+                        css: ExtractTextPlugin.extract({
+                            use: 'css-loader',
+                            fallback: 'vue-style-loader' // <- 这是vue-loader的依赖
+                        }),
+                        //用了less或者sass的地方都要用上哦
+                        'less': ExtractTextPlugin.extract({
+                            use: [
+                                'css-loader',
+                                'less-loader'
+                            ],
+                            fallback: 'vue-style-loader'
+                        })
+                    }
+                }
             },
             {
                 test: /\.less$/,
-                use: [
-                    'vue-style-loader',
-                    'css-loader',
-                    'less-loader'
-                ]
-            },
-            {
-                test: /\.vue$/,
-                loader: 'vue-loader',
-                options: {
-                    loaders: {
-                        'less': [//lang属性对应的名称
-                            'vue-style-loader',//首先给vue的样式loader过滤一遍
-                            'css-loader',//css-loader,把css转js
-                            'less-loader'//用less编译
-                        ]
-                    }
-                }
+                // use: [
+                //     'vue-style-loader',
+                //     'css-loader',
+                //     'less-loader'
+                // ]
+                //这里用的ExtractRootCss
+                use: ExtractRootCss.extract({
+                    fallback: 'style-loader',
+                    use: [
+                        'css-loader',
+                        'less-loader'
+                    ]
+                })
             }
+            // {
+            //     test: /\.vue$/,
+            //     loader: 'vue-loader',
+            //     options: {
+            //         loaders: {
+            //             'less': [//lang属性对应的名称
+            //                 'vue-style-loader',//首先给vue的样式loader过滤一遍
+            //                 'css-loader',//css-loader,把css转js
+            //                 'less-loader'//用less编译
+            //             ]
+            //         }
+            //     }
+            // }
         ]
     },
     resolve: {
@@ -93,12 +128,35 @@ module.exports = {
     plugins: [
         new VueLoaderPlugin(),
         new HtmlWebpackPlugin({
-            filename:'index.html',
-            title:'vue demo',
-            template:'./index.html'
+            filename: 'index.html',
+            title: 'vue demo',
+            template: './index.html'
         }),
-        new webpack.HotModuleReplacementPlugin()
-    ]
+        ExtractRootCss,//填入插件实例，复用的css
+        ExtractVueCss,//记得按顺序填入，vue内的css
+        new webpack.HotModuleReplacementPlugin(),
+        new ExtractTextPlugin("styles/style.css"),
+        new UglifyJsPlugin({
+            uglifyOptions: {
+                compress: {
+                    warnings: false
+                }
+            },
+            sourceMap: true
+        })
+    ],
+    //optimization与entry/plugins同级
+    optimization: {
+        splitChunks: {
+            cacheGroups: {
+                commons: {
+                    name: "vender",
+                    chunks: "initial",
+                    minChunks: 1
+                }
+            }
+        }
+    }
 }
 /**
  * 生成生产代码的时候才触发
@@ -112,4 +170,29 @@ if (process.env.NODE_ENV === 'production') {
             }
         })
     ])
+    //抽取从node_modules引入的模块，如vue
+    // new webpack.optimize.CommonsChunkPlugin({
+    //     name: 'vender',
+    //     minChunks:function(module,count){
+    //         var sPath = module.resource;
+    //         // console.log(sPath,count);
+    //         //匹配 node_modules文件目录
+    //         return sPath &&
+    //             /\.js$/.test(sPath) &&
+    //             sPath.indexOf(
+    //                 path.join(__dirname, 'node_modules')
+    //             ) === 0
+    //     }
+    // })
+
+    // new webpack.optimize.UglifyJsPlugin({
+    //     sourceMap: true,//开启源码映射
+    //     compress: {
+    //         warnings: false//去到警告
+    //     }
+    // })
+    new webpack.LoaderOptionsPlugin({
+        minimize: true
+    })
+    module.exports.devtool = '#source-map'
 }

@@ -1,5 +1,5 @@
 import Vue from 'vue'
-// import './styles/main.css'
+import './styles/main.css'
 import App from './App'
 
 new Vue({
