@@ -1,12 +1,11 @@
 <template>
     <div id="app">
-        <!--<img src="./images/logo.png" alt="logo"/>-->
-        <span>{{msg}}</span>
-        <p class="test">test text</p>
+        <img src="./images/logo.png" alt="logo"/>
+        <p class="test">{{msg}}</p>
     </div>
 </template>
 <script>
-//    import Vue from 'vue'
+    //    import Vue from 'vue'
     export default {
         name: 'App',
         data(){
@@ -16,13 +15,11 @@
         },
     }
 </script>
-<style>
-    .test {
-        color: #020202
-    }
-</style>
 <style lang="less">
-    #app{
-        img{width:100px;}
+    #app {
+        text-align: center;
+        img {
+            width: 100px;
+        }
     }
 </style>

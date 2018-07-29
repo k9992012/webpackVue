@@ -1,23 +1,23 @@
 //webpack.config.js
 const path = require('path')
 const webpack = require('webpack')
-const VueLoaderPlugin = require('vue-loader/lib/plugin')
-const HtmlWebpackPlugin = require('html-webpack-plugin')
-const ExtractTextPlugin = require("extract-text-webpack-plugin")
+const VueLoaderPlugin = require('vue-loader/lib/plugin')// .vue文件解析
+const HtmlWebpackPlugin = require('html-webpack-plugin')//按照index.html作为模板在dist目录下生成带上所有资源的html 文件
+const ExtractTextPlugin = require("extract-text-webpack-plugin")//样式提取
 const ExtractRootCss = new ExtractTextPlugin({filename: 'styles/root.css', allChunks: false});
 const ExtractVueCss = new ExtractTextPlugin({filename: 'styles/[name]/style.css', allChunks: true});
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin')//js代码压缩
 module.exports = {
     entry: './src/main.js',
-    devtool: '#eval-source-map',
+    devtool: '#eval-source-map',//源码映射
     output: {
         path: path.resolve(__dirname, 'dist'),
         filename: "js/[name].js"
     },
-    mode: "development",
+    mode: "development",//开发环境模式
     devServer: {
         contentBase: "./dist"
-    },
+    },//web服务器
     module: {
         rules: [
             {
@@ -59,7 +59,7 @@ module.exports = {
                     limit: 10000,
                     name: 'fonts/[name].[ext]?[hash]'
                 }
-                //和上面一致
+                //字体
             },
             {
                 test: /\.vue$/,
@@ -134,15 +134,15 @@ module.exports = {
         }),
         ExtractRootCss,//填入插件实例，复用的css
         ExtractVueCss,//记得按顺序填入，vue内的css
-        new webpack.HotModuleReplacementPlugin(),
+        new webpack.HotModuleReplacementPlugin(),//热替换
         new ExtractTextPlugin("styles/style.css"),
         new UglifyJsPlugin({
             uglifyOptions: {
                 compress: {
-                    warnings: false
+                    warnings: false//去除警告
                 }
             },
-            sourceMap: true
+            sourceMap: true//开启源码映射
         })
     ],
     //optimization与entry/plugins同级
@@ -152,7 +152,7 @@ module.exports = {
                 commons: {
                     name: "vender",
                     chunks: "initial",
-                    minChunks: 1
+                    minChunks: 2
                 }
             }
         }
@@ -194,5 +194,5 @@ if (process.env.NODE_ENV === 'production') {
     new webpack.LoaderOptionsPlugin({
         minimize: true
     })
-    module.exports.devtool = '#source-map'
+    module.exports.devtool = '#source-map'//源码映射
 }
